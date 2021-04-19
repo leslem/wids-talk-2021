@@ -5,7 +5,55 @@ date: "4/18/2021"
 output: html_document
 ---
 
-```{r read-data}
-
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
+```{r libraries}
+library(dplyr)
+```
+
+## 1. Read in the data
+
+If reformatting is needed to read in the data, that will show up in this step.
+
+```{r read-data}
+original <- read.csv("../data/spl_checkouts.csv", stringsAsFactors = FALSE)
+glimpse(original)
+```
+
+
+## 2. Validate the data
+
+Check for issues in the data that need to be fixed.
+
+```{r expected-rows}
+nrow(original) == length(readLines("../data/spl_checkouts.csv"))
+```
+
+```{r data-types}
+sapply(original, typeof)
+```
+
+```{r allowed-values}
+unique(original$usageclass)
+unique(original$checkouttype)
+unique(original$materialtype)
+unique(original$checkoutyear)
+unique(original$checkoutmonth)
+
+head(original$publisher)
+head(original$subjects)
+head(original$title)
+head(original$publicationyear)
+
+table(original$checkouts)
+```
+
+
+### Issues identified
+
+* `publicationyear` should be an integer, but is actually a character, with extraneous formatting around the year date
+
 
