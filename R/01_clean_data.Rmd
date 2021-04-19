@@ -1,0 +1,11 @@
+---
+title: "Cleaning the SPL checkouts data"
+author: "Leslie Emery"
+date: "4/18/2021"
+output: html_document
+---
+
+```{r read-data}
+
+```
+

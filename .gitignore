@@ -1,2 +1,8 @@
 data/
 talk-images/
+.Rproj.user
+.DS_Store
+R/.Rproj.user
+R/.Rhistory
+R/.RData
+R/.Ruserdata
