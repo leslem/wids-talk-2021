@@ -12,7 +12,7 @@ While data cleaning is crucial to achieving quality analysis results, data scien
 
 What can go wrong when you don't address common data cleaning issues? Which parts of data cleaning can and can't be automated responsibly? Are there existing tools for automating data cleaning? Join me for a discussion of one of the most crucial, but under-appreciated, tasks in data science. 
 
-Using examples in R and Python, I'll describe several different strategies for automating data cleaning, from notebook templates to custom cleaning functions to pipelining approaches. I'll finish by providing best practices for automating data cleaning, such as: data preservation, reproducibility, repeatability,  and documentation. By the end of this talk you'll know how to get the most out of the time you spend on data cleaning.
+Using examples in R and Python, I'll describe several different strategies for automating data cleaning, from notebook templates to custom cleaning functions to pipelining approaches. I'll finish by providing best practices for automating data cleaning, such as: data preservation, reproducibility, repeatability, and documentation. By the end of this talk you'll know how to get the most out of the time you spend on data cleaning.
 
 ## Four design patterns for automating data cleaning
 
