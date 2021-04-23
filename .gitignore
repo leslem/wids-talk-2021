@@ -1,8 +1,8 @@
-data/
+*.csv
+*.pdf
 talk-images/
-.Rproj.user
+*.Rproj.user
 .DS_Store
-R/.Rproj.user
-R/.Rhistory
-R/.RData
-R/.Ruserdata
+*.Rhistory
+*.RData
+*.Ruserdata
