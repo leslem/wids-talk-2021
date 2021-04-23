@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 # Just a quick script to get data from the Seattle Open Data API.
+# Data details are here: https://data.seattle.gov/Community/Checkouts-by-Title/tmmm-ytt6
 # Get two slices of the data on library checkouts to save to files.
+# It would be polite to get an API key, but I'm only downloading the data once for this example.
 
 import pandas as pd
 
