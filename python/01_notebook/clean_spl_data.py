@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-# Read in data
+# ## 1. Read in the data
 data_file = '../../data/spl_checkouts_2020_12.csv'
 spl_checkouts = pd.read_csv(data_file)
 
@@ -12,5 +12,10 @@ spl_checkouts = pd.read_csv(data_file)
 spl_checkouts.info()
 spl_checkouts.describe()
 
+# ## 2. Validate the data
 
-# Fix data types
+# ## 3. Correct the invalid values
+
+# ## 4. Adjust the inconvenient values
+
+# ## 5. Add new features/variables
