@@ -4,7 +4,8 @@ Version: 0.0.0.9000
 Authors@R: 
     person(given = "Leslie",
            family = "Emery",
-           role = c("aut", "cre"))
+           role = c("aut", "cre"),
+           email = 'leslie.s.emery@gmail.com')
 Description: Example of custom data cleaning functions in a package for WiDS Puget Sound 2021 talk.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to
     pick a license

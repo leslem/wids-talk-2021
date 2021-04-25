@@ -164,12 +164,17 @@ Remove the records for unexpected duplicates, preferentially keeping the one wit
 cleaned <- cleaned %>% arrange(desc(checkouts))
 dups <- which(duplicated(cleaned %>% select(all_of(unique_key_varnames))))
 
+# Remove the duplicates
 cleaned <- cleaned[-dups, ]
-any(duplicated(cleaned %>% select(all_of(unique_key_varnames))))
+# Check that they've been removed
+!any(duplicated(cleaned %>% select(all_of(unique_key_varnames))))
 ```
 
-### Correct `publicationyear`
+### Dataset-specific corrections
 
+Below here, add in corrections to make that have been idenfitied as being important for this dataset. As more batches of data are examined, continue to add to this section.
+
+#### Correct `publicationyear`
 
 ```{r try-publicationyear-correct}
 # Look for years with less than 2 digits
@@ -193,6 +198,12 @@ cleaned$publicationyear_csv <- sapply(all_found_years, FUN=paste0, collapse=',')
 
 
 ## 4. Adjust inconvenient values
+
+### Dataset-specific adjustments
+
+Below here, add in code for data adjustments that have been idenfitied as being important for this dataset. As more batches of data are examined, continue to add to this section.
+
+#### Adjust `materialtype`
 
 For the sake of readability, convert `materialtype` to lower case. Title case might have been nicer, but examples like "eBook" and "ER" aren't properly handled by straightforward title case.
 
