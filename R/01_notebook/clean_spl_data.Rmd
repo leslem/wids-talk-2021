@@ -2,7 +2,9 @@
 title: "Cleaning the SPL checkouts data"
 author: "Leslie Emery"
 date: "4/18/2021"
-output: html_document
+output:
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r libraries}
 library(dplyr)
+library(stringr)
 ```
 
 ## 1. Read in the data
@@ -28,33 +31,33 @@ original <- read.csv(data_file, stringsAsFactors = FALSE)
 
 Check for issues in the data that need to be fixed.
 
+```{r inspect-head}
+glimpse(original)
+```
+
 I can already see some potential issues just from looking at the top of the data:
 
 * Some columns of data are in all-caps
 * Some values of `title` and `creator` look malformed
 * `publicationyear` has some non-digit characters in it
 
-```{r inspect-head}
-glimpse(original)
-```
-
-The number of rows matches what I expect based on the number of newlines in the file (with `+ 1` accounting for the header row).
-
 ```{r expected-rows}
 (nrow(original) + 1) == length(readLines(data_file))
 ```
 
-I expect `publicationyear` to be an integer, but it's a character instead. This is probably because of the non-digit characters I noticed above.
+The number of rows matches what I expect based on the number of newlines in the file (with `+ 1` accounting for the header row).
+
+### Check data types
 
 ```{r data-types}
 sapply(original, typeof)
 ```
 
+I expect `publicationyear` to be an integer, but it's a character instead. This is probably because of the non-digit characters I noticed above.
+
+### Check allowed values
+
 The dataset documentation doesn't include a list of allowed values for each field, so I have to look at the observed values to figure out if there are any invalid values. `usageclass` and `materialtype` values look good, with just a couple of values and no typos. 
-
-Because `checkoutyear` and `checkoutmonth` have a pretty limited set of allowed values, I'm choosing to think of them as categorical variables. The observed values of both match the query parameters that were used to fetch this dataset, so that's great. 
-
-`materialtype` is a bit messy. It's all-caps, which is not wrong, but not how I want it formatted in the end. There are also some records that have multiple values in a comma-separated list. I'll keep the csv format for now, but will want conver to title case or all lowercase later. Some of the values look similar, but without more details in the documentation "VIDEO", "VIDEOCASS", "VIDEODISC", and "VIDEOREC" could very well be different materials.
 
 ```{r allowed-values-categorical}
 unique(original$usageclass)
@@ -66,7 +69,9 @@ unique(original$materialtype)
 sort(unique(unlist(strsplit(unique(original$materialtype), ', '))))
 ```
 
-`publisher`, `subjects`, and `title` are free text. The amount of data cleaning to do here depends on what you're using the data for, and cleaning free text can be very complicated. I'm going to leave these as-is for this example.
+Because `checkoutyear` and `checkoutmonth` have a pretty limited set of allowed values, I'm choosing to think of them as categorical variables. The observed values of both match the query parameters that were used to fetch this dataset, so that's great. 
+
+`materialtype` is a bit messy. It's all-caps, which is not wrong, but not how I want it formatted in the end. There are also some records that have multiple values in a comma-separated list. I'll keep the csv format for now, but will want conver to title case or all lowercase later. Some of the values look similar, but without more details in the documentation "VIDEO", "VIDEOCASS", "VIDEODISC", and "VIDEOREC" could very well be different materials.
 
 ```{r allowed-values-free-text}
 head(original$publisher)
@@ -74,10 +79,7 @@ head(original$subjects)
 head(original$title)
 ```
 
-`checkouts` doesn't have any obvious issues with data values. I'm back to the problem with `publicationdate` now and I can see that there are several kinds of problems to fix:
-
-* Multiple years per row (comma-separated)
-* Extraneous text characters including: [].c©?
+`publisher`, `subjects`, and `title` are free text. The amount of data cleaning to do here depends on what you're using the data for, and cleaning free text can be very complicated. I'm going to leave these as-is for this example.
 
 ```{r allowed-values-numeric}
 checkout_hist <- hist(original$checkouts)
@@ -88,7 +90,16 @@ range(original$checkouts)
 head(unique(original$publicationyear), 100)
 ```
 
+`checkouts` doesn't have any obvious issues with data values. I'm back to the problem with `publicationdate` now and I can see that there are several kinds of problems to fix:
+
+* Multiple years per row (comma-separated)
+* Extraneous text characters including: [].c©?
+
+### Check for duplicates
+
 I think this data should be unique for the combination of `checkoutmonth`, `checkoutyear`, `title`, and `creator`. But that turns out to be very wrong! Instead I thought about which fields **should not** be important for record uniqueness. I think that `checkouts` and `subjects` should not be important for record uniqueness.
+
+It turns out there are still ~30 duplicates that are only differentiated by `checkouts` and `subjects`. These look like legitimate duplicates with different values for `checkouts`. I've decided to keep only the record with the highest `checkouts` value, but it would be reasonable to remove all of the duplicates or to combine them by summing `checkouts` in a single record for each duplicate pair.
 
 ```{r duplicates}
 # Number of duplicates
@@ -96,21 +107,112 @@ sum(duplicated(original %>% select(checkoutmonth, checkoutyear, title, creator))
 sum(duplicated(original %>% 
                    select(checkoutmonth, checkoutyear, title, creator,
                           usageclass, checkouttype, materialtype, publisher, publicationyear)))
-
 sum(duplicated(original %>% select(-subjects, -checkouts)))
 
 # Show unexpected duplicates
-
+first_dups <- duplicated(original %>% select(-subjects, -checkouts))
+last_dups <- duplicated(original %>% select(-subjects, -checkouts), fromLast=TRUE)
+rmarkdown::paged_table(original[first_dups | last_dups, ])
 ```
 
+### Check for missing values
+
+```{r missing-values}
+nmissing <- apply(original, MARGIN=2, FUN=function(x){sum(is.na(x))})
+string_cols <- names(which(sapply(original, typeof) == 'character'))
+nempty <- apply(original %>% select(all_of(string_cols)), MARGIN=2, FUN=function(x){sum(x == '')})
+proportion_empty <- nempty / nrow(original)
+```
+
+There are no `NA` values in the dataset. For the free text variables, up to `r{round(max(proportion_empty) * 100, 0)}` % of values are empty strings. The only variable that really needs to be non-empty here is `title` and it doesn't have any empty values, so this is fine.
 
 ### Invalid data identified
 
-* `publicationyear` should be an integer, but is actually a character, with extraneous formatting around the year date
-
+* `publicationyear` should be an integer, but is actually a character, with extraneous formatting around the year date. Remove non-numeric characters and convert to int.
+* There are ~30 duplicate records that are only differentiated by `checkouts` and `subjects`. Remove the duplicate with the lowest `checkouts` value.
 
 ## 3. Correct the invalid values
 
+```{r create-cleaned}
+cleaned <- data.table::copy(original)
+```
+
+### Remove duplicates
+
+Remove the records for unexpected duplicates, preferentially keeping the one with the highest `checkouts` value.
+
+```{r remove-dups}
+# Sort by decreasing checkout so that duplicated() will select the lower checkout value to remove
+cleaned <- cleaned %>% arrange(desc(checkouts))
+dups <- which(duplicated(cleaned %>% select(-checkouts, -subjects)))
+cleaned <- cleaned[-dups, ]
+any(duplicated(cleaned %>% select(-checkouts, -subjects)))
+```
+
+### Correct `publicationyear`
+
+First, make sure it's possible to get a single integer year for all of the records. Also check for years before 1000, which would prevent looking for 4-digit strings to find years.
+
+```{r try-publicationyear-correct}
+# Look for years with less than 2 digits
+all_found_years <- str_extract_all(cleaned$publicationyear, "\\d+")
+short_year_rows <- which(
+    sapply(all_found_years, FUN = function(x){any((nchar(x) != 4) & (nchar(x) != 0))})
+)
+cleaned$publicationyear[short_year_rows]
+
+# Look for multiple years
+all_found_years <- str_extract_all(cleaned$publicationyear, "\\d{4}")
+multi_year_rows <- which(unlist(lapply(all_found_years, length)) > 1)
+head(cleaned$publicationyear[multi_year_rows], 50)
+```
+
+The `r{length(short_year_rows)}` records that have numbers of less than 4 digits in the publication year are formatting issues, not valid years before 1,000 AD. So it's safe to use a 4-digit regex to look for years.
+
+`r{length(multi_year_rows)}` records have more than one year listed in the `publicationyear` field. To account for this, I'll make a new variable that contains a csv list of years. 
+
+```{r add-publicationyear_csv}
+# Test that this works on the multi-year records
+sapply(head(all_found_years[multi_year_rows], 50), FUN=paste0, collapse=',')
+cleaned$publicationyear_csv <- sapply(all_found_years, FUN=paste0, collapse=',')
+```
 
 
 ## 4. Adjust inconvenient values
+
+For the sake of readability, convert `materialtype` to lower case. Title case might have been nicer, but examples like "eBook" and "ER" aren't properly handled by straightforward title case.
+
+```{r materialtype-case}
+str_to_lower(unique(cleaned$materialtype))
+cleaned$materialtype <- str_to_lower(cleaned$materialtype)
+```
+
+## 5. Derive new variables
+
+To help handle the issue with multiple publication years noted above, make two new variables. One for earliest publication year and one for latest publication year. Then when I use the data in an analysis I can choose between the different options for a numeric version of the `publicationyear` variable.
+
+```{r earliest-pubyear}
+cleaned$publicationyear_earliest <- sapply(all_found_years,
+                                           FUN=function(x){ifelse(length(x) == 0,
+                                                                  NA,
+                                                                  min(as.numeric(x)))})
+```
+
+```{r latest-pubyear}
+cleaned$publicationyear_latest <- sapply(all_found_years,
+                                         FUN=function(x){ifelse(length(x) == 0,
+                                                                NA,
+                                                                max(as.numeric(x)))})
+```
+
+## Save the cleaned data to a file
+
+```{r save-rdata}
+# This will maintain data types if we want to read it back into R with minimal processing
+saveRDS(cleaned, file = "spl_checkouts_2020_12_cleaned.rds")
+```
+
+```{r save-csv}
+write.csv(cleaned, file = "spl_checkouts_2020_12_cleaned.csv", 
+          row.names=FALSE)
+```

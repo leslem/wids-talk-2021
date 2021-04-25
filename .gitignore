@@ -1,8 +1,10 @@
-*.csv
-*.pdf
-talk-images/
-*.Rproj.user
 .DS_Store
-*.Rhistory
+*.csv
+*.html
+*.pdf
 *.RData
+*.rds
+*.Rhistory
+*.Rproj.user
 *.Ruserdata
+talk-images/
