@@ -31,4 +31,4 @@ url2 = data_endpoint + urlencode({'$where': "checkoutyear = 2019 AND checkoutmon
 data2 = pd.read_csv(url2)
 data2.info()
 data2.describe()
-data2.to_csv("../data/spl_checkouts_2019-12.csv", index = False)
+data2.to_csv("../data/spl_checkouts_2019_12.csv", index = False)
