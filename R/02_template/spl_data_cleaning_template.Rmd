@@ -1,0 +1,233 @@
+---
+title: "Cleaning `r basename(params$data_file)`"
+author: "`r params$author`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+params:
+    data_file: "example.csv"
+    author: "Leslie Emery"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r libraries}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+## 1. Read in the data
+
+```{r read-data}
+original <- read.csv(params$data_file, stringsAsFactors = FALSE)
+```
+
+
+## 2. Validate the data
+
+Check for issues in the data that need to be fixed.
+
+```{r inspect-head}
+glimpse(original)
+```
+
+Is the number of rows what was expected?
+
+```{r expected-rows}
+(nrow(original) + 1) == length(readLines(params$data_file))
+```
+
+### Check data types
+
+```{r data-types}
+expected_data_types <- c(
+    usageclass      = 'character',
+    checkouttype    = 'character',
+    materialtype    = 'character',
+    checkoutyear    = 'integer',
+    checkoutmonth   = 'integer',
+    checkouts       = 'integer',
+    title           = 'character',
+    creator         = 'character',
+    subjects        = 'character',
+    publisher       = 'character',
+    publicationyear = 'integer'
+)
+observed_data_types <- sapply(original, typeof)
+
+data_type_comparison <- data.frame(
+    colname = names(observed_data_types),
+    observed = unname(observed_data_types),
+    expected = unname(expected_data_types[names(observed_data_types)])
+)
+
+data_type_mismatches <- data_type_comparison %>% filter(observed != expected)
+if (nrow(data_type_mismatches) > 0){print(data_type_mismatches)}
+```
+
+### Check allowed values
+
+```{r allowed-values-categorical}
+categorical_varnames <- c('usageclass', 'checkouttype', 'checkoutyear', 'checkoutmonth', 'materialtype')
+
+for (var in categorical_varnames){
+    cat("\nUnique values of", var, '\n')
+    print(unique(original[var]))
+}
+
+# TODO: Adding barplots here would be helpful
+```
+
+```{r allowed-values-free-text}
+free_text_varnames <- c('publisher', 'subjects', 'title', 'publicationyear')
+
+for (var in free_text_varnames) {
+    cat('\nHead of', var, '\n')
+    print(str_trunc(head(original[[var]], 15), 40))
+}
+```
+
+```{r allowed-values-numeric}
+numeric_varnames <- c('checkouts')
+
+for (var in numeric_varnames){
+    ggp <- ggplot(original) +
+        geom_histogram(aes_string(x=var), bins=40) +
+        theme_bw()
+    print(ggp)
+}
+```
+
+
+### Check for duplicates
+
+
+```{r duplicates}
+unique_key_varnames <- setdiff(colnames(original), c('subjects', 'checkouts'))
+
+# Show unexpected duplicates
+first_dups <- duplicated(original %>% select(all_of(unique_key_varnames)))
+last_dups <- duplicated(original %>% select(all_of(unique_key_varnames)), fromLast=TRUE)
+all_dups <- which(first_dups | last_dups)
+
+n_dups <- length(all_dups)
+
+if (n_dups > 0){
+    rmarkdown::paged_table(
+        original[first_dups | last_dups, ] %>% arrange(title, creator, desc(checkouts)))
+}
+```
+
+`r n_dups` records are duplicates of ~`r sum(first_dups)` unique records.
+
+### Check for missing values
+
+```{r missing-values}
+nmissing <- apply(original, MARGIN=2, FUN=function(x){sum(is.na(x))})
+cat('Missing values by variable:\n')
+print(nmissing)
+
+string_cols <- names(which(sapply(original, typeof) == 'character'))
+nempty <- apply(original %>% select(all_of(string_cols)), MARGIN=2, FUN=function(x){sum(x == '')})
+proportion_empty <- nempty / nrow(original)
+
+cat('Empty string values by variable:\n')
+print(nempty)
+cat('Proportion of empty string values by variable:\n')
+print(proportion_empty)
+```
+
+### Invalid data identified
+
+Keep track of data to be corrected.
+
+* 
+* 
+
+## 3. Correct the invalid values
+
+```{r create-cleaned}
+cleaned <- data.table::copy(original)
+```
+
+### Remove duplicates
+
+Remove the records for unexpected duplicates, preferentially keeping the one with the highest `checkouts` value.
+
+```{r remove-dups}
+# Sort by decreasing checkout so that duplicated() will select the lower checkout value to remove
+cleaned <- cleaned %>% arrange(desc(checkouts))
+dups <- which(duplicated(cleaned %>% select(all_of(unique_key_varnames))))
+
+cleaned <- cleaned[-dups, ]
+any(duplicated(cleaned %>% select(all_of(unique_key_varnames))))
+```
+
+### Correct `publicationyear`
+
+
+```{r try-publicationyear-correct}
+# Look for years with less than 2 digits
+all_found_years <- str_extract_all(cleaned$publicationyear, "\\d+")
+short_year_rows <- which(
+    sapply(all_found_years, FUN = function(x){any((nchar(x) != 4) & (nchar(x) != 0))})
+)
+cleaned$publicationyear[short_year_rows]
+
+# Look for multiple years
+all_found_years <- str_extract_all(cleaned$publicationyear, "\\d{4}")
+multi_year_rows <- which(unlist(lapply(all_found_years, length)) > 1)
+head(cleaned$publicationyear[multi_year_rows], 50)
+```
+
+```{r add-publicationyear_csv}
+# Test that this works on the multi-year records
+sapply(head(all_found_years[multi_year_rows], 50), FUN=paste0, collapse=',')
+cleaned$publicationyear_csv <- sapply(all_found_years, FUN=paste0, collapse=',')
+```
+
+
+## 4. Adjust inconvenient values
+
+For the sake of readability, convert `materialtype` to lower case. Title case might have been nicer, but examples like "eBook" and "ER" aren't properly handled by straightforward title case.
+
+```{r materialtype-case}
+str_to_lower(unique(cleaned$materialtype))
+cleaned$materialtype <- str_to_lower(cleaned$materialtype)
+```
+
+## 5. Derive new variables
+
+```{r earliest-pubyear}
+cleaned$publicationyear_earliest <- sapply(all_found_years,
+                                           FUN=function(x){ifelse(length(x) == 0,
+                                                                  NA,
+                                                                  min(as.numeric(x)))})
+```
+
+```{r latest-pubyear}
+cleaned$publicationyear_latest <- sapply(all_found_years,
+                                         FUN=function(x){ifelse(length(x) == 0,
+                                                                NA,
+                                                                max(as.numeric(x)))})
+```
+
+## Save the cleaned data to a file
+
+```{r set-outfile-name}
+outfile_prefix <- tools::file_path_sans_ext(basename(params$data_file))
+```
+
+```{r save-rdata}
+# This will maintain data types if we want to read it back into R with minimal processing
+saveRDS(cleaned, file = paste0(outfile_prefix, "_cleaned.rds"))
+```
+
+```{r save-csv}
+write.csv(cleaned, file = paste0(outfile_prefix, "_cleaned.csv"), row.names=FALSE)
+```

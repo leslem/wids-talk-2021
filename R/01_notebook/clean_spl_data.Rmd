@@ -112,7 +112,8 @@ sum(duplicated(original %>% select(-subjects, -checkouts)))
 # Show unexpected duplicates
 first_dups <- duplicated(original %>% select(-subjects, -checkouts))
 last_dups <- duplicated(original %>% select(-subjects, -checkouts), fromLast=TRUE)
-rmarkdown::paged_table(original[first_dups | last_dups, ])
+rmarkdown::paged_table(
+    original[first_dups | last_dups, ] %>% arrange(title, creator, desc(checkouts)))
 ```
 
 ### Check for missing values
@@ -124,7 +125,7 @@ nempty <- apply(original %>% select(all_of(string_cols)), MARGIN=2, FUN=function
 proportion_empty <- nempty / nrow(original)
 ```
 
-There are no `NA` values in the dataset. For the free text variables, up to `r{round(max(proportion_empty) * 100, 0)}` % of values are empty strings. The only variable that really needs to be non-empty here is `title` and it doesn't have any empty values, so this is fine.
+There are no `NA` values in the dataset. For the free text variables, up to `r round(max(proportion_empty) * 100, 0)` % of values are empty strings. The only variable that really needs to be non-empty here is `title` and it doesn't have any empty values, so this is fine.
 
 ### Invalid data identified
 
@@ -167,9 +168,9 @@ multi_year_rows <- which(unlist(lapply(all_found_years, length)) > 1)
 head(cleaned$publicationyear[multi_year_rows], 50)
 ```
 
-The `r{length(short_year_rows)}` records that have numbers of less than 4 digits in the publication year are formatting issues, not valid years before 1,000 AD. So it's safe to use a 4-digit regex to look for years.
+The `r length(short_year_rows)` records that have numbers of less than 4 digits in the publication year are formatting issues, not valid years before 1,000 AD. So it's safe to use a 4-digit regex to look for years.
 
-`r{length(multi_year_rows)}` records have more than one year listed in the `publicationyear` field. To account for this, I'll make a new variable that contains a csv list of years. 
+`r length(multi_year_rows)` records have more than one year listed in the `publicationyear` field. To account for this, I'll make a new variable that contains a csv list of years. 
 
 ```{r add-publicationyear_csv}
 # Test that this works on the multi-year records
