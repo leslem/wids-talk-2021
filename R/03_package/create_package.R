@@ -1,3 +1,4 @@
+source('../../renv/activate.R')
 library(usethis)
 
 # setwd('devel/wids-talk-2021')
@@ -17,8 +18,9 @@ use_r('process_materialtype', open=FALSE)
 
 use_r('save_cleaned_data', open=FALSE)
 
-# use_r('run_data_checks', open=FALSE)
-# use_r('clean_data', open=FALSE)
+use_package('dplyr')
+use_package('stringr')
+use_package('magrittr')
 
 devtools::document()
 devtools::check()

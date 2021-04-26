@@ -1,10 +1,11 @@
 .DS_Store
+.Rproj.user
 *.csv
 *.html
 *.pdf
+*.Rapp.history
 *.RData
 *.rds
 *.Rhistory
-*.Rproj.user
 *.Ruserdata
 talk-images/
