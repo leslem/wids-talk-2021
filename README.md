@@ -23,33 +23,25 @@ Using examples in R and Python, I'll describe several different strategies for a
 
 ## Project organization
 
-├── data: SPL data files (not tracked) and script to fetch the data
-├── R: All example files in R
-│   ├── 01_notebook: Examples of design pattern 1, a reproducible script/notebook
-│   ├── 02_template: Examples of design pattern 2, a generalized template script/notebook
-│   ├── 03_package: Examples of design pattern 3, a custom package for cleaning data
-│   │   └── cleanSPL: R package with custom functions for cleaning the SPL data files
-│   ├── 04_pipeline: (incomplete) Examples of design pattern 4, a pipeline for batch data cleaning
-│   └── renv: Reproducible package library for this R project
-└── python: All example files in python
-    ├── 01_notebook: (incomplete) Examples of design pattern 1, a reproducible script/notebook
-    ├── 02_template: (incomplete) Examples of design pattern 2, a generalized template script/notebook
-    ├── 03_package: (incomplete) Examples of design pattern 3, a custom module for cleaning data
-    └── 04_pipeline: (incomplete) Examples of design pattern 4, a pipeline for batch data cleaning
+```
+├── data:               SPL data files (not tracked) and script to fetch the data
+├── R:                  All example files in R
+│   ├── 01_notebook:    Examples of design pattern 1, a reproducible script/notebook
+│   ├── 02_template:    Examples of design pattern 2, a generalized template script/notebook
+│   ├── 03_package:     Examples of design pattern 3, a custom package for cleaning data
+│   │   └── cleanSPL:   R package with custom functions for cleaning the SPL data files
+│   ├── 04_pipeline:    (incomplete) Examples of design pattern 4, a pipeline for batch data cleaning
+│   └── renv:           Reproducible package library for this R project
+└── python:             All example files in python
+    ├── 01_notebook:    (incomplete) Examples of design pattern 1, a reproducible script/notebook
+    ├── 02_template:    (incomplete) Examples of design pattern 2, a generalized template script/notebook
+    ├── 03_package:     (incomplete) Examples of design pattern 3, a custom module for cleaning data
+    └── 04_pipeline:    (incomplete) Examples of design pattern 4, a pipeline for batch data cleaning
+```
 
 ## How to run example scripts yourself
 
 * Clone the repository: `git clone git@github.com:leslem/wids-talk-2021.git`
-
-### R
-
-* Open the R project file `R/wids-talk-2021.Rproj` with RStudio or navigate to the R directory in your favorite R interactive environment.
-* Restore the `renv` library: `renv::restore()`
-* Knit an Rmarkdown (.Rmd) report: `rmarkdown::render('01_notebook/clean_spl_data.Rmd')`
-* Load the R package for data cleaning from example 03 from within an interactive R environment: `devtools::load_all('03_package/cleanSPL')`
-* Run an R script from the command line: `Rscript --vanilla 03_package/clean_spl_data.R ../data/spl_checkouts_2020_12.csv`
-
-You can see a script that runs all of the R data cleaning example scripts at `R/run_R_examples.R`
 
 ### Python
 
@@ -73,3 +65,13 @@ conda activate myenv
 * Run a script from the command line from the same directory: `./spl_data_pandas_profiling.py`
 
 You can see a script that runs all of the python data cleaning example scripts at `python/run_python_examples.py`
+
+### R
+
+* Open the R project file `R/wids-talk-2021.Rproj` with RStudio or navigate to the R directory in your favorite R interactive environment.
+* Restore the `renv` library: `renv::restore()`
+* Knit an Rmarkdown (.Rmd) report: `rmarkdown::render('01_notebook/clean_spl_data.Rmd')`
+* Load the R package for data cleaning from example 03 from within an interactive R environment: `devtools::load_all('03_package/cleanSPL')`
+* Run an R script from the command line: `Rscript --vanilla 03_package/clean_spl_data.R ../data/spl_checkouts_2020_12.csv`
+
+You can see a script that runs all of the R data cleaning example scripts at `R/run_R_examples.R`
