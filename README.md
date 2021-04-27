@@ -2,6 +2,8 @@
 
 Code examples for my talk at [Women in Data Science Puget Sound 2021](https://www.widspugetsound.org/bios-abstracts-2021).
 
+You can find my slides [here](https://docs.google.com/presentation/d/1F34bKLPONMHuVlyBO8H66y6zxxqtyN8Vb6KVDYF5XCo/edit?usp=sharing)
+
 ## Title: Data cleaning for lazy people (with high standards): how to automate data cleaning responsibly
 
 ### Abstract: 
